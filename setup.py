@@ -27,7 +27,7 @@ setup(
     author_email='yang@yangyubo.com',
     url='http://github.com/django-notifications/django-notifications',
     install_requires=[
-        'django>=4.2,<5.3',
+        'django>=4.2,<6.2',
         'django-model-utils>=3.1.0',
         'jsonfield>=2.1.0',
         'swapper',
@@ -57,6 +57,8 @@ setup(
         'Framework :: Django :: 5.0',
         'Framework :: Django :: 5.1',
         'Framework :: Django :: 5.2',
+        'Framework :: Django :: 6.0',
+        'Framework :: Django :: 6.1',
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python',
@@ -66,6 +68,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Topic :: Utilities'
     ],
     keywords='django notifications github action event stream',

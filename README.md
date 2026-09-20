@@ -340,7 +340,8 @@ There are two possible API calls that can be made:
     4.  `fetch` (default `5`) - How many notifications to fetch each
         time.
     5.  `callbacks` (default `<empty string>`) - A comma-separated list
-        of javascript functions to call each period.
+        of JavaScript function names to call each period, including dotted
+        names such as `app.notify`. Arbitrary JavaScript expressions are not accepted.
     6.  `api_name` (default `list`) - The name of the API to call (this
         can be either `list` or `count`).
     7. ``mark_as_read`` (default ``False``) - Marks notifications as read when fetched.

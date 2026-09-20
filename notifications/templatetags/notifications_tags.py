@@ -1,9 +1,11 @@
 ''' Django notifications template tags file '''
 # -*- coding: utf-8 -*-
+import re
+
 from django import get_version
 from django.core.cache import cache
 from django.template import Library
-from django.utils.html import format_html
+from django.utils.html import escapejs, format_html, format_html_join
 from packaging.version import (
     parse as parse_version,  # pylint: disable=no-name-in-module,import-error
 )
@@ -68,7 +70,7 @@ def register_notify_callbacks(badge_class='live_notify_badge',  # pylint: disabl
         api_url = reverse('notifications:live_unread_notification_count')
     else:
         return ""
-    definitions = """
+    definitions = format_html("""
         notify_badge_class='{badge_class}';
         notify_menu_class='{menu_class}';
         notify_api_url='{api_url}';
@@ -77,25 +79,26 @@ def register_notify_callbacks(badge_class='live_notify_badge',  # pylint: disabl
         notify_mark_all_unread_url='{mark_all_unread_url}';
         notify_refresh_period={refresh};
         notify_mark_as_read={mark_as_read};
-    """.format(
-        badge_class=badge_class,
-        menu_class=menu_class,
+    """,
+        badge_class=escapejs(badge_class),
+        menu_class=escapejs(menu_class),
         refresh=refresh_period,
-        api_url=api_url,
-        unread_url=reverse('notifications:unread'),
-        mark_all_unread_url=reverse('notifications:mark_all_as_read'),
-        fetch_count=fetch,
+        api_url=escapejs(api_url),
+        unread_url=escapejs(reverse('notifications:unread')),
+        mark_all_unread_url=escapejs(reverse('notifications:mark_all_as_read')),
+        fetch_count=escapejs(str(fetch)),
         mark_as_read=str(mark_as_read).lower()
     )
 
     # add a nonce value to the script tag if one is provided
-    nonce_str = ' nonce="{nonce}"'.format(nonce=nonce) if nonce else ""
+    nonce_str = format_html(' nonce="{}"', nonce) if nonce else ""
 
-    script = '<script type="text/javascript"{nonce}>'.format(nonce=nonce_str) + definitions
-    for callback in callbacks.split(','):
-        script += "register_notifier(" + callback + ");"
-    script += "</script>"
-    return format_html(script)
+    callback_names = [name.strip() for name in callbacks.split(',') if name.strip()]
+    for name in callback_names:
+        if not re.fullmatch(r'[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*', name):
+            raise ValueError('Notification callbacks must be JavaScript function names.')
+    registrations = format_html_join('', 'register_notifier({});', ((name,) for name in callback_names))
+    return format_html('<script type="text/javascript"{}>{}{}</script>', nonce_str, definitions, registrations)
 
 
 @register.simple_tag(takes_context=True)
@@ -104,16 +107,14 @@ def live_notify_badge(context, badge_class='live_notify_badge'):
     if not user:
         return ''
 
-    html = "<span class='{badge_class}'>{unread}</span>".format(
+    return format_html("<span class='{badge_class}'>{unread}</span>",
         badge_class=badge_class, unread=get_cached_notification_unread_count(user)
     )
-    return format_html(html)
 
 
 @register.simple_tag
 def live_notify_list(list_class='live_notify_list'):
-    html = "<ul class='{list_class}'></ul>".format(list_class=list_class)
-    return format_html(html)
+    return format_html("<ul class='{list_class}'></ul>", list_class=list_class)
 
 
 def user_context(context):
